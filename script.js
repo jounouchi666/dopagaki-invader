@@ -151,11 +151,20 @@ const cutInInner = document.getElementById('cutInInner');
 
 let width = 0;
 let height = 0;
+let feverCutInTimer;
 
 function resize() {
-  const rect = wrapper.getBoundingClientRect();
-  width = canvas.width = rect.width;
-  height = canvas.height = rect.height;
+  const rect = canvas.getBoundingClientRect();
+  width = rect.width;
+  height = rect.height;
+  const ratio = window.devicePixelRatio || 1;
+  canvas.width = Math.round(width * ratio);
+  canvas.height = Math.round(height * ratio);
+  ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+  if (isPlaying) {
+    player.x = Math.max(player.w / 2, Math.min(width - player.w / 2, player.x));
+    player.y = height - 50;
+  }
 }
 window.addEventListener('resize', resize);
 
@@ -201,7 +210,7 @@ const DOPAMINE_WORDS = [
 function createInvaders() {
   invaders = [];
   const rows = 4;
-  const cols = Math.min(8, Math.floor(width / 50));
+  const cols = Math.max(1, Math.min(8, Math.floor(width / 50)));
   const startX = (width - cols * 44) / 2;
   const startY = 50;
 
@@ -289,7 +298,8 @@ function activateFever() {
   cutInInner.classList.remove('scale-50');
   cutInInner.classList.add('scale-110');
   
-  setTimeout(() => {
+  clearTimeout(feverCutInTimer);
+  feverCutInTimer = setTimeout(() => {
     feverCutIn.classList.add('opacity-0');
     cutInInner.classList.remove('scale-110');
     cutInInner.classList.add('scale-50');
@@ -360,6 +370,19 @@ function startGame() {
   lives = 3;
   dopamine = 0;
   isFever = false;
+  feverTime = 0;
+  comboTimer = 0;
+  shakeIntensity = 0;
+  invaderDir = 1;
+  invaderSpeed = 1.2;
+  player.shootCooldown = 0;
+  clearInputs();
+  clearTimeout(feverCutInTimer);
+  feverCutIn.classList.add('opacity-0');
+  cutInInner.classList.remove('scale-110');
+  cutInInner.classList.add('scale-50');
+  feverBg.style.opacity = '0';
+  wrapper.classList.remove('fever-border');
   bullets = [];
   enemyBullets = [];
   particles = [];
@@ -374,6 +397,7 @@ function startGame() {
 
 function gameOver() {
   isPlaying = false;
+  clearInputs();
   startScreen.classList.remove('hidden');
   startScreen.innerHTML = `
     <h2 class="text-4xl md:text-5xl font-black text-red-500 drop-shadow-[0_0_20px_#ff0000] animate-bounce">
@@ -442,6 +466,7 @@ function update() {
     if (feverTime <= 0) {
       endFever();
     }
+    updateUI();
   }
 
   // コンボタイマー減衰
@@ -532,11 +557,12 @@ function update() {
     invaders.forEach(inv => {
       inv.y += 14;
       // 最前線突破チェック
-      if (inv.y + inv.h >= player.y - 10) {
+      if (isPlaying && inv.y + inv.h >= player.y - 10) {
         gameOver();
       }
     });
     invaderSpeed = Math.min(invaderSpeed + 0.15, 6.0);
+    if (!isPlaying) return;
   }
 
   // 弾とインベーダーの衝突
@@ -784,72 +810,106 @@ function draw() {
   ctx.restore();
 }
 
-function gameLoop() {
-  update();
+// 固定ステップで従来の60fps時の挙動を維持する。
+const stepMs = 1000 / 60;
+let lastTime = 0;
+let accumulated = 0;
+function gameLoop(time) {
+  if (lastTime) accumulated += Math.min(time - lastTime, 100);
+  lastTime = time;
+  while (accumulated >= stepMs) {
+    update();
+    accumulated -= stepMs;
+  }
   draw();
   requestAnimationFrame(gameLoop);
 }
 
-// ==========================================
-// 入力・タッチイベント管理
-// ==========================================
-window.addEventListener('keydown', e => {
-  if (e.key === 'ArrowLeft' || e.key === 'a') player.isMovingLeft = true;
-  if (e.key === 'ArrowRight' || e.key === 'd') player.isMovingRight = true;
-  if (e.key === ' ' || e.key === 'z') shootBullet();
-});
-
-window.addEventListener('keyup', e => {
-  if (e.key === 'ArrowLeft' || e.key === 'a') player.isMovingLeft = false;
-  if (e.key === 'ArrowRight' || e.key === 'd') player.isMovingRight = false;
-});
-
-// モバイル用ボタン
 const leftBtn = document.getElementById('leftBtn');
 const rightBtn = document.getElementById('rightBtn');
 const shotBtn = document.getElementById('shotBtn');
+const keys = new Set();
+const heldPointers = new Map();
+let dragPointer = null;
 
-const bindTouch = (elem, onPress, onRelease) => {
-  elem.addEventListener('touchstart', (e) => { e.preventDefault(); onPress(); });
-  elem.addEventListener('touchend', (e) => { e.preventDefault(); onRelease(); });
-  elem.addEventListener('mousedown', onPress);
-  elem.addEventListener('mouseup', onRelease);
-  elem.addEventListener('mouseleave', onRelease);
-};
+function syncMovement() {
+  player.isMovingLeft = keys.has('arrowleft') || keys.has('a') || [...heldPointers.values()].includes('left');
+  player.isMovingRight = keys.has('arrowright') || keys.has('d') || [...heldPointers.values()].includes('right');
+}
+function clearInputs() {
+  keys.clear();
+  heldPointers.clear();
+  dragPointer = null;
+  syncMovement();
+}
+window.addEventListener('keydown', e => {
+  const key = e.key.toLowerCase();
+  if (e.target instanceof HTMLButtonElement && (key === ' ' || key === 'enter')) return;
+  if (['arrowleft', 'arrowright', 'a', 'd', ' ', 'z'].includes(key)) {
+    if (isPlaying) e.preventDefault();
+    keys.add(key);
+    syncMovement();
+    if (key === ' ' || key === 'z') shootBullet();
+  }
+});
+window.addEventListener('keyup', e => {
+  keys.delete(e.key.toLowerCase());
+  syncMovement();
+});
+window.addEventListener('blur', clearInputs);
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) clearInputs();
+  lastTime = 0;
+  accumulated = 0;
+});
 
-bindTouch(leftBtn, () => player.isMovingLeft = true, () => player.isMovingLeft = false);
-bindTouch(rightBtn, () => player.isMovingRight = true, () => player.isMovingRight = false);
-bindTouch(shotBtn, () => shootBullet(), () => {});
+function bindButton(button, direction) {
+  button.addEventListener('click', e => { if (e.detail === 0 && !direction) shootBullet(); });
+  if (direction) {
+    button.addEventListener('keydown', e => {
+      if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); heldPointers.set('keyboard-' + direction, direction); syncMovement(); }
+    });
+    button.addEventListener('keyup', e => {
+      if (e.key === ' ' || e.key === 'Enter') { heldPointers.delete('keyboard-' + direction); syncMovement(); }
+    });
+    button.addEventListener('blur', () => { heldPointers.delete('keyboard-' + direction); syncMovement(); });
+  }
+  button.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    button.setPointerCapture(e.pointerId);
+    if (direction) {
+      heldPointers.set(e.pointerId, direction);
+      syncMovement();
+    } else shootBullet();
+  });
+  const release = e => { heldPointers.delete(e.pointerId); syncMovement(); };
+  button.addEventListener('pointerup', release);
+  button.addEventListener('pointercancel', release);
+  button.addEventListener('lostpointercapture', release);
+}
+bindButton(leftBtn, 'left');
+bindButton(rightBtn, 'right');
+bindButton(shotBtn, null);
 
-// キャンバス上のスワイプ / ドラッグによる直感移動
-let isDragging = false;
-function handlePointerMove(clientX) {
+function movePointer(e) {
   if (!isPlaying) return;
   const rect = canvas.getBoundingClientRect();
-  const relativeX = clientX - rect.left;
-  player.x = Math.max(player.w / 2, Math.min(width - player.w / 2, relativeX));
+  player.x = Math.max(player.w / 2, Math.min(width - player.w / 2, e.clientX - rect.left));
 }
-
-canvas.addEventListener('mousedown', (e) => { isDragging = true; handlePointerMove(e.clientX); });
-window.addEventListener('mousemove', (e) => { if (isDragging) handlePointerMove(e.clientX); });
-window.addEventListener('mouseup', () => { isDragging = false; });
-
-canvas.addEventListener('touchstart', (e) => {
-  isDragging = true;
-  if (e.touches[0]) handlePointerMove(e.touches[0].clientX);
-}, { passive: false });
-
-canvas.addEventListener('touchmove', (e) => {
-  if (isDragging && e.touches[0]) {
-    handlePointerMove(e.touches[0].clientX);
-  }
-}, { passive: false });
-
-window.addEventListener('touchend', () => { isDragging = false; });
+canvas.addEventListener('pointerdown', e => {
+  if (dragPointer !== null) return;
+  dragPointer = e.pointerId;
+  canvas.setPointerCapture(e.pointerId);
+  movePointer(e);
+});
+canvas.addEventListener('pointermove', e => { if (e.pointerId === dragPointer) movePointer(e); });
+for (const event of ['pointerup', 'pointercancel', 'lostpointercapture']) {
+  canvas.addEventListener(event, e => { if (e.pointerId === dragPointer) dragPointer = null; });
+}
 
 startBtn.addEventListener('click', startGame);
 
 window.onload = function () {
   resize();
-  gameLoop();
+  requestAnimationFrame(gameLoop);
 };
