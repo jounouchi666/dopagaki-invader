@@ -65,7 +65,7 @@ body.game-layout {
   body.game-layout {
     height: 100vh;
     height: 100svh;
-    padding-bottom: max(3.5rem, env(safe-area-inset-bottom));
+    padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
   }
 }
 @media (display-mode: standalone) {
@@ -74,6 +74,12 @@ body.game-layout {
     height: 100dvh;
     padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
   }
+}
+/* iOSでは display-mode に加えて navigator.standalone も使う。 */
+html.is-standalone body.game-layout {
+  height: 100vh;
+  height: 100dvh;
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
 }
 #controls { flex: none; gap: 0.5rem; padding-inline: 0; }
 #controls > div { min-width: 0; }

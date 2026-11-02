@@ -2,6 +2,11 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
+  <script>
+    if (navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches) {
+      document.documentElement.classList.add('is-standalone');
+    }
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#050010">
   <meta name="apple-mobile-web-app-capable" content="yes">
