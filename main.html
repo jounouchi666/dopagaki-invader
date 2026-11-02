@@ -30,12 +30,13 @@
         <span class="text-xs text-yellow-400 font-bold tracking-widest">脳汁指数:</span>
         <span id="scoreText" class="text-2xl font-black text-yellow-300 tracking-wider">0</span>
       </div>
-      <div id="comboBadge" class="hidden px-3 py-0.5 rounded-full bg-gradient-to-r from-red-600 to-pink-500 text-xs font-black animate-pulse border border-yellow-300 shadow-[0_0_15px_#ff0055]">
-        COMBO x<span id="comboText">0</span>
-      </div>
       <div id="livesGroup" class="flex items-center gap-1">
         <span class="text-xs text-pink-400">残基:</span>
-        <div id="livesContainer" class="flex gap-1 text-sm text-pink-500">❤️❤️❤️</div>
+        <div id="livesContainer" class="flex gap-1 text-pink-500" role="img" aria-label="残基3">
+          <svg class="life-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21s-9-5.4-9-11.3C3 4.6 9 3 12 7.2 15 3 21 4.6 21 9.7 21 15.6 12 21 12 21z"/></svg>
+          <svg class="life-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21s-9-5.4-9-11.3C3 4.6 9 3 12 7.2 15 3 21 4.6 21 9.7 21 15.6 12 21 12 21z"/></svg>
+          <svg class="life-icon" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 21s-9-5.4-9-11.3C3 4.6 9 3 12 7.2 15 3 21 4.6 21 9.7 21 15.6 12 21 12 21z"/></svg>
+        </div>
       </div>
     </div>
 
@@ -51,6 +52,11 @@
   <!-- ゲームキャンバスコンテナ -->
   <main id="gameWrapper" class="relative flex-1 w-full max-w-2xl flex items-center justify-center my-1 rounded-2xl overflow-hidden border-2 border-purple-800/60 bg-black/70 shadow-2xl transition-all">
     <canvas id="gameCanvas" class="w-full h-full block"></canvas>
+    <div class="combo-overlay" aria-hidden="true">
+      <div id="comboBadge" class="hidden px-3 py-0.5 rounded-full bg-gradient-to-r from-red-600 to-pink-500 text-xs font-black animate-pulse border border-yellow-300 shadow-[0_0_15px_#ff0055]">
+        COMBO x<span id="comboText">0</span>
+      </div>
+    </div>
 
     <!-- スタート / ゲームオーバー / ドパガキ覚醒画面オーバーレイ -->
     <div id="startScreen" class="absolute inset-0 bg-black/85 flex flex-col items-center justify-center gap-4 p-6 z-20 text-center">

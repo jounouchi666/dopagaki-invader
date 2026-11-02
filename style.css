@@ -102,10 +102,14 @@ html.is-standalone body.game-layout {
   #startScreen button { margin-top: 0.25rem; padding: 0.4rem 1rem; font-size: 1rem; }
 }
 
-/* コンボが増えても残基とぶつからないよう、専用の行を使う。 */
-#hudRow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.25rem 0.5rem; }
+/* HUDの高さと残基の位置を保つ。 */
+#hudRow { height: 3.5rem; box-sizing: border-box; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.25rem 0.5rem; }
 #scoreGroup { min-width: 0; }
 #scoreGroup > span:first-child, #livesGroup, #livesContainer { white-space: nowrap; }
-#scoreText { min-width: 0; overflow-wrap: anywhere; }
+#scoreText { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; line-height: 1.4; }
 #livesGroup { grid-column: 2; grid-row: 1; }
-#comboBadge { grid-column: 1 / -1; grid-row: 2; justify-self: center; white-space: nowrap; max-width: 100%; }
+#livesContainer { flex: none; }
+.life-icon { width: 1rem; height: 1rem; flex: none; filter: drop-shadow(0 0 3px #ff0055); }
+.life-icon.life-lost { opacity: 0.2; filter: none; }
+.combo-overlay { position: absolute; top: 0.5rem; left: 0; right: 0; z-index: 10; display: flex; justify-content: center; pointer-events: none; }
+#comboBadge { white-space: nowrap; max-width: calc(100% - 1rem); overflow: hidden; text-overflow: ellipsis; }

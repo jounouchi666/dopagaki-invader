@@ -420,7 +420,15 @@ function gameOver() {
 
 function updateUI() {
   scoreText.innerText = score.toLocaleString();
-  livesContainer.innerHTML = '❤️'.repeat(Math.max(0, lives));
+  const remaining = Math.max(0, lives);
+  livesContainer.setAttribute('aria-label', `残基${remaining}`);
+  [...livesContainer.children].forEach((heart, index) => heart.classList.toggle('life-lost', index >= remaining));
+  scoreText.style.fontSize = '';
+  let size = parseFloat(getComputedStyle(scoreText).fontSize);
+  while (scoreText.scrollWidth > scoreText.clientWidth && size > 12) {
+    size -= 1;
+    scoreText.style.fontSize = `${size}px`;
+  }
   
   gaugePct.innerText = Math.floor(dopamine);
   dopamineBar.style.width = `${Math.min(100, dopamine)}%`;
