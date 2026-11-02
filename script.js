@@ -294,7 +294,7 @@ function activateFever() {
   triggerShake(20);
 
   // カットイン演出
-  feverCutIn.classList.remove('opacity-0');
+  feverCutIn.classList.remove('hidden', 'opacity-0');
   cutInInner.classList.remove('scale-50');
   cutInInner.classList.add('scale-110');
   
@@ -398,6 +398,10 @@ function startGame() {
 function gameOver() {
   isPlaying = false;
   clearInputs();
+  clearTimeout(feverCutInTimer);
+  feverCutIn.classList.add('hidden', 'opacity-0');
+  cutInInner.classList.remove('scale-110');
+  cutInInner.classList.add('scale-50');
   startScreen.classList.remove('hidden');
   startScreen.innerHTML = `
     <h2 class="text-4xl md:text-5xl font-black text-red-500 drop-shadow-[0_0_20px_#ff0000] animate-bounce">
