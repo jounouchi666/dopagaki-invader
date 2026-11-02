@@ -47,3 +47,35 @@ body {
 .control-icon { display: inline-block; width: 1em; height: 1em; vertical-align: -0.12em; }
 #gameCanvas, #leftBtn, #rightBtn, #shotBtn { touch-action: none; }
 #gameWrapper { min-height: 0; }
+
+/* Safariの操作バーと、端末の安全領域に合わせる。 */
+html { background: #050010; }
+body {
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  padding-top: max(0.5rem, env(safe-area-inset-top));
+  padding-right: max(0.5rem, env(safe-area-inset-right));
+  padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  padding-left: max(0.5rem, env(safe-area-inset-left));
+}
+#controls { flex: none; gap: 0.5rem; padding-inline: 0; }
+#controls > div { min-width: 0; }
+#leftBtn, #rightBtn, #shotBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  white-space: nowrap;
+  min-width: 0;
+  padding-inline: 0.35rem;
+  font-size: clamp(0.8rem, 4vw, 1.5rem);
+}
+#shotBtn { flex: 0 0 30%; }
+.control-icon { flex: none; }
+@media (max-height: 500px) {
+  #leftBtn, #rightBtn, #shotBtn { padding-block: 0.5rem; }
+  #startScreen { gap: 0.25rem; padding: 0.5rem; overflow-y: auto; }
+  #startScreen h1 { font-size: 1.5rem; }
+  #startScreen button { margin-top: 0.25rem; padding: 0.4rem 1rem; font-size: 1rem; }
+}
