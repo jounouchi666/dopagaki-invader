@@ -59,6 +59,22 @@ body.game-layout {
   padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
   padding-left: max(0.5rem, env(safe-area-inset-left));
 }
+/* タッチ端末のブラウザでは、下部のフローティングツールバーを避ける。
+   ホーム画面からの起動時は安全領域だけを確保する。 */
+@media (display-mode: browser) and (pointer: coarse) {
+  body.game-layout {
+    height: 100vh;
+    height: 100svh;
+    padding-bottom: max(3.5rem, env(safe-area-inset-bottom));
+  }
+}
+@media (display-mode: standalone) {
+  body.game-layout {
+    height: 100vh;
+    height: 100dvh;
+    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+  }
+}
 #controls { flex: none; gap: 0.5rem; padding-inline: 0; }
 #controls > div { min-width: 0; }
 #leftBtn, #rightBtn, #shotBtn {
