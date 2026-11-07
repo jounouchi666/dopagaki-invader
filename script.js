@@ -546,13 +546,28 @@ function update() {
     }
   }
 
-  // インベーダー移動ロジック
-  let hitEdge = false;
-  invaders.forEach(inv => {
-    inv.x += invaderDir * invaderSpeed;
-    if (inv.x < 15 || inv.x > width - 45) {
-      hitEdge = true;
+  // 画面幅が変わって隊列が両端にはみ出した場合は、隊列を収める。
+  // 余裕を残すことで、両端で毎フレーム反転し続けることも防ぐ。
+  const leftEdge = 15;
+  const rightEdge = Math.max(leftEdge, width - 45);
+  if (invaders.length > 0) {
+    const minX = Math.min(...invaders.map(inv => inv.x));
+    const maxX = Math.max(...invaders.map(inv => inv.x));
+    const available = rightEdge - leftEdge;
+    const span = maxX - minX;
+    if (span > 0 && span >= available) {
+      const targetSpan = available * 0.8;
+      const startX = leftEdge + (available - targetSpan) / 2;
+      invaders.forEach(inv => { inv.x = startX + (inv.x - minX) * targetSpan / span; });
     }
+  }
+
+  // 進行方向側の端に到達した時だけ反転し、超過分を戻して一段降りる。
+  let edgeOverflow = 0;
+  invaders.forEach(inv => {
+    inv.x += invaderDir * (rightEdge > leftEdge ? invaderSpeed : 0);
+    const overflow = invaderDir > 0 ? inv.x - rightEdge : leftEdge - inv.x;
+    edgeOverflow = Math.max(edgeOverflow, overflow);
 
     // たまに敵弾発射
     if (Math.random() < 0.003 && !isFever) {
@@ -564,7 +579,8 @@ function update() {
     }
   });
 
-  if (hitEdge) {
+  if (edgeOverflow > 0) {
+    invaders.forEach(inv => { inv.x -= invaderDir * edgeOverflow; });
     invaderDir *= -1;
     invaders.forEach(inv => {
       inv.y += 14;
